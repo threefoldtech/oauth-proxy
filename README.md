@@ -10,6 +10,13 @@ Install the requirements:
 pip3 install -r requirements.txt
 ```
 
+Make sure to have the secret in `/opt/key.priv` encoded usnig a `Base64` encoding, an example using `pyNaCl`:
+
+```python
+k = nacl.signing.SigningKey.generate()  # Ususally the key is generated using a seed
+k.encode(encoder=nacl.encoding.Base64Encoder).decode()  # What should be in the file
+```
+
 The application is a simple bottle server, and it can be run using `uwsgi`as follows:
 
 ```bash

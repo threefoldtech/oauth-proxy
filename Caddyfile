@@ -1,0 +1,8 @@
+http://oauth.threefold.io, https://oauth.threefold.io {
+    redir {
+        if {scheme} is http
+        / https://{host}{uri}
+    }
+    tls info@threefold.io
+    proxy / localhost:8999
+}
