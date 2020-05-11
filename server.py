@@ -4,62 +4,36 @@ import nacl.signing
 import requests
 import json
 import base64
-import argparse
 
 from bottle import Bottle, redirect, request, abort, run
-from urllib.parse import urlencode
 from nacl.public import Box
 
-from uuid import uuid4
 
-from beaker.middleware import SessionMiddleware
-
-LOGIN_URL = "/login"
-CALLBACK_URL = "/callback"
+PUBKEY_URL = "/pubkey"
+VERIFY_URL = "/verify"
 KEY_PATH = "/opt/priv.key"
 
-_session_opts = {"session.type": "file", "session.data_dir": "./data", "session.auto": True}
 
 with open(KEY_PATH) as kp:
     PRIV_KEY = nacl.signing.SigningKey(kp.read(), encoder=nacl.encoding.Base64Encoder)
 
-app = Bottle()
+app = application = Bottle()
 
 
-def get_session():
-    return request.environ.get("beaker.session")
+@app.route(PUBKEY_URL)
+def pubkey():
+    public_key = PRIV_KEY.verify_key
+
+    return {
+        "publickey": public_key.to_curve25519_public_key().encode(encoder=nacl.encoding.Base64Encoder).decode(),
+    }
 
 
-def frmt_response(session):
-    return {"email": session["email"], "username": session["username"]}
+@app.post(VERIFY_URL)
+def verify():
 
-
-@app.route(LOGIN_URL)
-def login():
-    session = get_session()
-    if not session.get("authorized", False):
-        state = str(uuid4()).replace("-", "")
-        session["state"] = state
-        redirect_url = "https://login.threefold.me"
-        public_key = PRIV_KEY.verify_key
-
-        params = {
-            "state": state,
-            "appid": request.get_header("host"),
-            "scope": json.dumps({"user": True, "email": True}),
-            "redirecturl": CALLBACK_URL,
-            "publickey": public_key.to_curve25519_public_key().encode(encoder=nacl.encoding.Base64Encoder),
-        }
-        params = urlencode(params)
-        return redirect(f"{redirect_url}?{params}", code=302)
-    else:
-        return frmt_response(session)
-
-
-@app.route(CALLBACK_URL)
-def callback():
-
-    data = request.query.get("signedAttempt")
+    data = request.params.get("signedAttempt")
+    state = request.params.get("state")
 
     if not data:
         return abort(400, "signedAttempt parameter is missing")
@@ -97,9 +71,8 @@ def callback():
         return abort(400, "username mismatch!")
 
     # verify state
-    state = data["signedState"]
-    session = get_session()
-    if state != session["state"]:
+    signed_state = data.get("signedState", "")
+    if state != signed_state:
         return abort(400, "Invalid state. not matching one in user session")
 
     nonce = base64.b64decode(data["data"]["nonce"])
@@ -131,16 +104,4 @@ def callback():
     if res.status_code != 200:
         return abort(400, "Email is not verified")
 
-    session["username"] = username
-    session["email"] = email
-    session["authorized"] = True
-    session["signedAttempt"] = signedData
-    return frmt_response(session)
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--host", help="Host of the server", default="0.0.0.0")
-parser.add_argument("--port", help="Port of the server", default=8080)
-args = parser.parse_args()
-app = SessionMiddleware(app, _session_opts)
-run(app, host=args.host, port=args.port)
+    return {"email": email, "username": username}
