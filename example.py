@@ -1,6 +1,6 @@
 import requests
 import os
-from bottle import Bottle, redirect, request, abort, run
+from bottle import Bottle, redirect, request, run
 from urllib.parse import urlencode
 import json
 from beaker.middleware import SessionMiddleware

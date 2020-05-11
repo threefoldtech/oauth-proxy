@@ -4,6 +4,12 @@ This server will handle 3bot connect authentication and verification, eliminatin
 
 ## Running the server
 
+Install the requirements:
+
+```bash
+pip3 install -r requirements.txt
+```
+
 The application is a simple bottle server, and it can be run using `uwsgi`as follows:
 
 ```bash

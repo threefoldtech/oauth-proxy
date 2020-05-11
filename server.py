@@ -5,7 +5,7 @@ import requests
 import json
 import base64
 
-from bottle import Bottle, redirect, request, abort, run
+from bottle import Bottle, request, abort
 from nacl.public import Box
 
 
