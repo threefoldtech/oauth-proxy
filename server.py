@@ -38,12 +38,15 @@ def verify():
     if not data:
         return abort(400, "signedAttempt parameter is missing")
 
-    data = json.loads(data)
+    try:
+        data = json.loads(data)
+    except json.JSONDecodeError:
+        return abort(400, "signedAttempt not in correct format")
 
     if "signedAttempt" not in data:
         return abort(400, "signedAttempt value is missing")
 
-    username = data["doubleName"]
+    username = data.get("doubleName")
 
     if not username:
         return abort(400, "DoubleName is missing")

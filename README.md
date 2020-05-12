@@ -30,10 +30,4 @@ In order to use this server the application server must have follwing two endpoi
 - An endpoint that gets the public key from the Oauth server and redirects the user to `3bot connect` correct url
 - A callback endpoint that receives the data from `3bot connect` and sends it to Oauth server to verify
 
-You can find an [example](exmaple.py) python script that implements both.
-
-To run the example set `OAUTH_SERVER_URL` environment variable with Oauth server address and run the script:
-
-```bash
-python3 example.py
-```
+You can find a crystal lang and python example [here](examples/README.md).
