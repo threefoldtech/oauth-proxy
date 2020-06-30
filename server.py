@@ -32,16 +32,23 @@ def pubkey():
 @app.post(VERIFY_URL)
 def verify():
 
-    data = request.params.get("signedAttempt")
-    state = request.params.get("state")
+    is_json = "application/json" in request.headers["Content-Type"]
+    if is_json:
+        request_data = request.json
+    else:
+        request_data = request.params
+
+    data = request_data.get("signedAttempt")
+    state = request_data.get("state")
 
     if not data:
         return abort(400, "signedAttempt parameter is missing")
 
-    try:
-        data = json.loads(data)
-    except json.JSONDecodeError:
-        return abort(400, "signedAttempt not in correct format")
+    if not is_json:
+        try:
+            data = json.loads(data)
+        except json.JSONDecodeError:
+            return abort(400, "signedAttempt not in correct format")
 
     if "signedAttempt" not in data:
         return abort(400, "signedAttempt value is missing")
@@ -108,3 +115,7 @@ def verify():
         return abort(400, "Email is not verified")
 
     return {"email": email, "username": username}
+
+
+if __name__ == "__main__":
+    app.run()
