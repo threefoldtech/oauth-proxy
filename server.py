@@ -5,7 +5,7 @@ import requests
 import json
 import base64
 
-from bottle import Bottle, request, abort
+from bottle import Bottle, request, abort, response
 from nacl.public import Box
 
 
@@ -19,8 +19,20 @@ with open(KEY_PATH) as kp:
 
 app = application = Bottle()
 
+def enable_cors(fn):
+    def _enable_cors(*args, **kwargs):
+        # set CORS headers
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, OPTIONS, DELETE"
+        response.headers[
+            "Access-Control-Allow-Headers"
+        ] = "Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token"
+
+        return fn(*args, **kwargs)
+    return _enable_cors
 
 @app.route(PUBKEY_URL)
+@enable_cors
 def pubkey():
     public_key = PRIV_KEY.verify_key
 
@@ -30,6 +42,7 @@ def pubkey():
 
 
 @app.post(VERIFY_URL)
+@enable_cors
 def verify():
 
     is_json = "application/json" in request.headers["Content-Type"]
