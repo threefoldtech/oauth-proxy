@@ -8,7 +8,6 @@ RUN mkdir /oauth-proxy
 COPY . /oauth-proxy/
 WORKDIR /oauth-proxy
 RUN cd /oauth-proxy && pip3 install -r requirements.txt
-RUN python3 /oauth-proxy/create_keys.py
 
 ENV OAUTH_PROXY_PORT=8080
 
