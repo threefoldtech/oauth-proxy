@@ -19,6 +19,7 @@ with open(KEY_PATH) as kp:
 
 app = application = Bottle()
 
+
 def enable_cors(fn):
     def _enable_cors(*args, **kwargs):
         # set CORS headers
@@ -29,16 +30,31 @@ def enable_cors(fn):
         ] = "Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token"
 
         return fn(*args, **kwargs)
+
     return _enable_cors
+
+
+@app.route("/checks/readiness")
+def readiness():
+    with open("/opt/priv.key", "r") as f:
+        priv_key = f.read()
+    if priv_key:
+        return {"readiness": "success"}
+    else:
+        return abort(400, "Private key not created")
+
+
+@app.route("/checks/liveness")
+def liveness():
+    return {"liveness": "success"}
+
 
 @app.route(PUBKEY_URL)
 @enable_cors
 def pubkey():
     public_key = PRIV_KEY.verify_key
 
-    return {
-        "publickey": public_key.to_curve25519_public_key().encode(encoder=nacl.encoding.Base64Encoder).decode(),
-    }
+    return {"publickey": public_key.to_curve25519_public_key().encode(encoder=nacl.encoding.Base64Encoder).decode()}
 
 
 @app.post(VERIFY_URL)
